@@ -1,5 +1,7 @@
 import time
 import threading
+import socket
+import json
 import config
 import validation
 import storage
@@ -32,13 +34,75 @@ class RegistrationServer:
                 self.total_registered += 1
         self.add_log(f"Loaded {self.total_registered} past registrations.")
 
+    def start(self):
+        storage.ensure_data_file()
+        self.load_existing_data()
+        
+        # [Unit 5: sockets] create, bind, and listen
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((config.HOST, config.PORT))
+        self.server_socket.listen()
+        
+        self.running = True
+        self.add_log(f"Server started on port {config.PORT}")
+        
+        # [Unit 5: multithreading] start listener daemon thread
+        listener_thread = threading.Thread(target=self.accept_loop, daemon=True)
+        listener_thread.start()
+
+    def accept_loop(self):
+        while self.running:
+            try:
+                # [Unit 5: sockets] accept new connections
+                conn, addr = self.server_socket.accept()
+                # [Unit 5: multithreading] create one daemon thread per client
+                client_thread = threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True)
+                client_thread.start()
+            except OSError:
+                break
+
+    def handle_client(self, conn, addr):
+        try:
+            # [Unit 5: sockets] read JSON request
+            data = conn.recv(config.BUFFER_SIZE).decode()
+            if not data:
+                return
+                
+            try:
+                request = json.loads(data)
+            except json.JSONDecodeError:
+                reply = make_error("BAD_REQUEST", "Malformed JSON")
+                conn.sendall((json.dumps(reply) + "\n").encode())
+                return
+                
+            reply = self.process_request(request)
+            
+            # [Unit 5: sockets] send JSON reply
+            conn.sendall((json.dumps(reply) + "\n").encode())
+            
+        except OSError:
+            self.add_log(f"Connection error with {addr}")
+        finally:
+            # [Unit 5: sockets] always close the connection
+            conn.close()
+
+    def process_request(self, request):
+        action = request.get("action")
+        if action == "GET_COURSES":
+            return self.get_courses()
+        elif action == "REGISTER":
+            return self.register(request)
+        else:
+            return make_error("BAD_REQUEST", "Unknown action")
+
     def get_courses(self):
         with self.lock:
             return {"status": "OK", "courses": dict(self.seats_left)}
 
     def register(self, request):
         if config.USE_LOCK:
-            # [Unit 5: Multithreading] one thread at a time in here
+            # [Unit 5: multithreading] one thread at a time in here
             with self.lock:
                 return self.check_and_save(request)
         else:
@@ -118,42 +182,22 @@ class RegistrationServer:
 
 # TEMP TEST: remove in Phase 10
 if __name__ == "__main__":
-    print("Testing server logic...")
-    storage.ensure_data_file()
-    storage.clear_registrations()
-    
+    print("Starting server... Press Ctrl+C to stop.")
     srv = RegistrationServer()
-    srv.load_existing_data()
+    srv.start()
     
-    # 1. Success
-    r1 = srv.register({"name": "Asmi", "roll_number": "24BCE1000", "email": "a@x.com", "course": "CSE3011 Python Programming"})
-    print("1. Success:", r1["status"])
-    
-    # 2. Duplicate roll
-    r2 = srv.register({"name": "Asmi 2", "roll_number": "24BCE1000", "email": "a@x.com", "course": "CSE2001 Data Structures"})
-    print("2. Duplicate:", r2["code"])
-    
-    # 3. Bad course
-    r3 = srv.register({"name": "Niharika", "roll_number": "24BCE1001", "email": "n@x.com", "course": "Unknown Course"})
-    print("3. Bad Course:", r3["code"])
-    
-    # 4. Invalid field
-    r4 = srv.register({"name": "", "roll_number": "24BCE1002", "email": "n@x.com", "course": "CSE2001 Data Structures"})
-    print("4. Invalid:", r4["code"])
-    
-    # 5. Full course (CSE2001 has 3 seats. Fill it.)
-    srv.register({"name": "S1", "roll_number": "24BCE1003", "email": "x@x.com", "course": "CSE2001 Data Structures"})
-    srv.register({"name": "S2", "roll_number": "24BCE1004", "email": "x@x.com", "course": "CSE2001 Data Structures"})
-    srv.register({"name": "S3", "roll_number": "24BCE1005", "email": "x@x.com", "course": "CSE2001 Data Structures"})
-    
-    r5 = srv.register({"name": "S4", "roll_number": "24BCE1006", "email": "x@x.com", "course": "CSE2001 Data Structures"})
-    print("5. Full Course:", r5["code"])
-    
-    print("\nLog:")
-    for line in srv.activity_log:
-        print(line)
-        
-    print("\nRestarting server to test load...")
-    srv2 = RegistrationServer()
-    srv2.load_existing_data()
-    print("Seats left after reload:", srv2.get_courses()["courses"])
+    try:
+        last_log_count = 0
+        while True:
+            snapshot = srv.get_snapshot()
+            current_log = snapshot["log"]
+            if len(current_log) > last_log_count:
+                for line in current_log[last_log_count:]:
+                    print(line)
+                last_log_count = len(current_log)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Stopping server.")
+        srv.running = False
+        if srv.server_socket:
+            srv.server_socket.close()
