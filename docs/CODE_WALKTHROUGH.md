@@ -31,3 +31,8 @@ This file contains no logic or functions, only constant variables used throughou
 * **`start()`**: Sets up the TCP server. It calls `socket()` to create the socket, `bind()` to attach it to our host and port, and `listen()` to wait for clients. Finally, it launches the `accept_loop` in a background daemon thread so the main thread isn't blocked. [Unit 5: sockets, multithreading]
 * **`accept_loop()`**: An infinite loop that calls `accept()` to receive incoming client connections. For each new connection, it spawns a fresh daemon thread running `handle_client`. This way, a slow client doesn't freeze the server for others. [Unit 5: sockets, multithreading]
 * **`handle_client(conn, addr)`**: Runs in its own thread. It reads the incoming JSON payload via `conn.recv()`, handles it using `process_request()`, sends back the JSON reply via `conn.sendall()`, and ensures the connection is safely closed in a `finally` block. [Unit 5: sockets]
+
+## Phase 5: Client Network Helper
+
+### `client_net.py`
+* **`send_request(server_ip, request)`**: A utility function that opens a TCP socket, connects to the given IP, sends a JSON string, and waits for a reply. It wraps everything in a `try/except` block to ensure that if the server is offline or the connection drops, it simply returns a safe `"NETWORK"` error dictionary instead of crashing the client app. [Unit 5: sockets, Unit 3: exceptions]
