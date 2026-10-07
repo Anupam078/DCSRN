@@ -15,3 +15,12 @@ This file contains no logic or functions, only constant variables used throughou
 * **`append_registration(roll, name, email, course)`**: Gets the current time as a string, builds a comma-separated line, and saves it using append mode (`"a"`). Append mode guarantees we add to the bottom without deleting old records. [Unit 4: file handling]
 * **`load_registrations()`**: Opens the file in read mode (`"r"`), loops through each line, and uses `split(",")` to turn it into a list. It skips any malformed lines that have fewer than 5 parts. [Unit 4: file handling]
 * **`clear_registrations()`**: Instantly empties the entire file by opening it in write mode (`"w"`) and immediately closing it.
+
+## Phase 3: Server Logic (No Network)
+
+### `server.py`
+* **`RegistrationServer.__init__()`**: Sets up the server's memory, including a dictionary for seats left, a set for duplicate-checking roll numbers, and a single `threading.Lock()` to protect them all.
+* **`load_existing_data()`**: Called at startup. It reads the CSV file using `storage.py` and rebuilds the seat counts and roll number set so no data is lost between restarts.
+* **`check_and_save(request)`**: The core business logic. It strictly follows a 6-step sequence: validate inputs, check course exists, check duplicate roll, check seats > 0, save to file, and finally update memory. [Unit 2: dict/set logic]
+* **`register(request)`**: A wrapper around `check_and_save`. If `USE_LOCK` is True, it runs the entire 6-step sequence inside a `with self.lock:` block. This guarantees that two threads cannot interleave and overbook a seat. [Unit 5: threading lock]
+* **`get_snapshot()` & `reset_data()` & `get_courses()`**: Also use `with self.lock:` to ensure the dashboard never reads partially-updated data and reset operations don't clash with incoming requests.
