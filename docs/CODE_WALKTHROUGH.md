@@ -36,3 +36,10 @@ This file contains no logic or functions, only constant variables used throughou
 
 ### `client_net.py`
 * **`send_request(server_ip, request)`**: A utility function that opens a TCP socket, connects to the given IP, sends a JSON string, and waits for a reply. It wraps everything in a `try/except` block to ensure that if the server is offline or the connection drops, it simply returns a safe `"NETWORK"` error dictionary instead of crashing the client app. [Unit 5: sockets, Unit 3: exceptions]
+
+## Phase 6: Server Dashboard (Tkinter)
+
+### `server_gui.py`
+* **`ServerDashboard.__init__()` and layout functions**: Creates the main Tkinter window and lays out nested frames for the header, info, courses, log, and buttons using `.pack()` and `.grid()`. [Unit 5: GUI, layouts]
+* **`refresh()`**: Uses `root.after()` to schedule itself to run every 500ms. It grabs a safe snapshot of the server's data via `server.get_snapshot()` and updates the labels and log text. This polling pattern ensures we never directly touch UI widgets from our network worker threads, preventing crashes. [Unit 5: event-driven programming]
+* **`on_start_click()` / `on_reset_click()`**: Event handlers triggered by button clicks. They interact with the `RegistrationServer` instance and display confirmation or error dialogs (like `messagebox.askyesno`) when needed. [Unit 5: GUI dialogs]
