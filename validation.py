@@ -31,23 +31,4 @@ def validate_fields(name, roll_number, email, course):
 
     return ""
 
-# TEMP TEST: remove in Phase 10
-if __name__ == "__main__":
-    tests = [
-        # 1. Valid input
-        ("Asmi Chakne", "24BCE10354", "asmi@example.com", "CSE3011 Python Programming"),
-        # 2. 1-char name
-        ("A", "24BCE10354", "asmi@example.com", "CSE3011 Python Programming"),
-        # 3. Roll with a space
-        ("Asmi Chakne", "24 BCE", "asmi@example.com", "CSE3011 Python Programming"),
-        # 4. Email without @
-        ("Asmi Chakne", "24BCE10354", "asmiexample.com", "CSE3011 Python Programming"),
-        # 5. Name with a comma
-        ("Asmi, Chakne", "24BCE10354", "asmi@example.com", "CSE3011 Python Programming"),
-        # 6. Empty course
-        ("Asmi Chakne", "24BCE10354", "asmi@example.com", "")
-    ]
-    
-    for i, test in enumerate(tests, 1):
-        result = validate_fields(*test)
-        print(f"Test {i}: {result if result else 'OK'}")
+

@@ -53,18 +53,4 @@ def clear_registrations():
     with open(DATA_FILE, "w") as f:
         pass
 
-# TEMP TEST: remove in Phase 10
-if __name__ == "__main__":
-    print("Testing storage...")
-    ensure_data_file()
-    clear_registrations()
-    
-    append_registration("24BCE10354", "Asmi Chakne", "asmi@example.com", "CSE3011 Python Programming")
-    append_registration("25BOE10105", "Niharika Tanwi", "niharika@example.com", "CSE2001 Data Structures")
-    
-    records = load_registrations()
-    for rec in records:
-        print("Loaded:", rec)
-        
-    clear_registrations()
-    print("File cleared.")
+

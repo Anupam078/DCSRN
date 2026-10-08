@@ -180,24 +180,4 @@ class RegistrationServer:
             self.activity_log.clear()
             self.add_log("Data reset.")
 
-# TEMP TEST: remove in Phase 10
-if __name__ == "__main__":
-    print("Starting server... Press Ctrl+C to stop.")
-    srv = RegistrationServer()
-    srv.start()
-    
-    try:
-        last_log_count = 0
-        while True:
-            snapshot = srv.get_snapshot()
-            current_log = snapshot["log"]
-            if len(current_log) > last_log_count:
-                for line in current_log[last_log_count:]:
-                    print(line)
-                last_log_count = len(current_log)
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("Stopping server.")
-        srv.running = False
-        if srv.server_socket:
-            srv.server_socket.close()
+

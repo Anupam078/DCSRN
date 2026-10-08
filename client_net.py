@@ -35,42 +35,4 @@ def send_request(server_ip, request):
         if sock:
             sock.close()
 
-# TEMP TEST: remove in Phase 10
-if __name__ == "__main__":
-    import sys
-    ip = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
-    
-    print(f"Testing client_net.py connecting to {ip}...")
-    
-    # 1. Fetch courses
-    print("\n1. Fetching courses:")
-    res = send_request(ip, {"action": "GET_COURSES"})
-    print(res)
-    
-    if res.get("status") == "OK":
-        # 2. Register one student
-        print("\n2. Registering student:")
-        res = send_request(ip, {
-            "action": "REGISTER", 
-            "name": "Phase 5 Test", 
-            "roll_number": "TEST5", 
-            "email": "test5@example.com", 
-            "course": "CSE3011 Python Programming"
-        })
-        print(res)
-        
-        # 3. Try the same roll again
-        print("\n3. Duplicate registration:")
-        res = send_request(ip, {
-            "action": "REGISTER", 
-            "name": "Phase 5 Test", 
-            "roll_number": "TEST5", 
-            "email": "test5@example.com", 
-            "course": "CSE3011 Python Programming"
-        })
-        print(res)
-        
-        # 4. Try wrong IP (should timeout/fail gracefully)
-        print("\n4. Wrong IP test:")
-        res = send_request("192.0.2.1", {"action": "GET_COURSES"})
-        print(res)
+
