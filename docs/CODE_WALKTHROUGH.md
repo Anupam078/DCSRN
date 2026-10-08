@@ -57,3 +57,10 @@ This file contains no logic or functions, only constant variables used throughou
 * **`on_submit_click()`**: Immediately validates all fields using `validation.py` so we don't send garbage data to the server. If valid, it disables the buttons to prevent double-clicking and spawns a background thread (`network_worker`) to do the slow network request. [Unit 5: multithreading]
 * **`network_worker()`**: A daemon thread that calls `client_net.send_request` and saves the server's JSON reply in `self.worker_result`. Because it runs in the background, the Tkinter window never freezes while waiting for the server. [Unit 5: sockets, multithreading]
 * **`check_worker()`**: The main Tkinter thread uses `root.after(100, self.check_worker)` to repeatedly check if `self.worker_result` has arrived. Once it does, it safely updates the UI (showing success/error dialogs, updating seats left) and re-enables the buttons. [Unit 5: GUI event loop, multithreading]
+
+## Phase 9: Race Condition Demo
+
+### `test_race.py`
+* **`try_to_register()`**: A simple worker function meant to be run by a thread. It constructs a mock registration payload and sends it to the server via `client_net.send_request()`. [Unit 5: threading, sockets]
+* **`main()` / Concurrent Spawning**: Uses a `for` loop to create and start 10 identical threads at exactly the same time, all attempting to register for a course that only has 4 seats left. [Unit 5: multithreading]
+* **Race Condition Outcome**: When `USE_LOCK` is turned off, the threads arrive at the server simultaneously. Because saving to the file takes a fraction of a second, multiple threads check the seats *before* the first thread finishes updating the count. The result is overbooking, which is exactly why the `threading.Lock` in `server.py` is mandatory.
