@@ -43,3 +43,10 @@ This file contains no logic or functions, only constant variables used throughou
 * **`ServerDashboard.__init__()` and layout functions**: Creates the main Tkinter window and lays out nested frames for the header, info, courses, log, and buttons using `.pack()` and `.grid()`. [Unit 5: GUI, layouts]
 * **`refresh()`**: Uses `root.after()` to schedule itself to run every 500ms. It grabs a safe snapshot of the server's data via `server.get_snapshot()` and updates the labels and log text. This polling pattern ensures we never directly touch UI widgets from our network worker threads, preventing crashes. [Unit 5: event-driven programming]
 * **`on_start_click()` / `on_reset_click()`**: Event handlers triggered by button clicks. They interact with the `RegistrationServer` instance and display confirmation or error dialogs (like `messagebox.askyesno`) when needed. [Unit 5: GUI dialogs]
+
+## Phase 7: Client Window Layout
+
+### `client_gui.py` (Layout)
+* **`ClientApp.__init__()` and layout functions**: Uses nested `Frame` widgets to segment the window logically (header, server info, form, buttons, status). We use `.pack()` to stack the main frames vertically, but we use `.grid()` inside the form frame to cleanly align the labels and text boxes. [Unit 5: GUI, layouts]
+* **`tk.StringVar()`**: Instead of reading text boxes manually, we attach `StringVar` objects to our Entry widgets. This makes it trivial to get or set text (e.g., when the Clear button is clicked). [Unit 5: GUI widgets]
+* **Button Handlers (`on_submit_click`, etc.)**: Tied to our buttons using `command=self.method`. In this phase, they just update the status label via `self.status_label.config()`, proving our event-driven system works before we add network complexity. [Unit 5: event-driven programming]
