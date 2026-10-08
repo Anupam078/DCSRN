@@ -50,3 +50,10 @@ This file contains no logic or functions, only constant variables used throughou
 * **`ClientApp.__init__()` and layout functions**: Uses nested `Frame` widgets to segment the window logically (header, server info, form, buttons, status). We use `.pack()` to stack the main frames vertically, but we use `.grid()` inside the form frame to cleanly align the labels and text boxes. [Unit 5: GUI, layouts]
 * **`tk.StringVar()`**: Instead of reading text boxes manually, we attach `StringVar` objects to our Entry widgets. This makes it trivial to get or set text (e.g., when the Clear button is clicked). [Unit 5: GUI widgets]
 * **Button Handlers (`on_submit_click`, etc.)**: Tied to our buttons using `command=self.method`. In this phase, they just update the status label via `self.status_label.config()`, proving our event-driven system works before we add network complexity. [Unit 5: event-driven programming]
+
+## Phase 8: Client App Logic (Threads + Network)
+
+### `client_gui.py` (Logic)
+* **`on_submit_click()`**: Immediately validates all fields using `validation.py` so we don't send garbage data to the server. If valid, it disables the buttons to prevent double-clicking and spawns a background thread (`network_worker`) to do the slow network request. [Unit 5: multithreading]
+* **`network_worker()`**: A daemon thread that calls `client_net.send_request` and saves the server's JSON reply in `self.worker_result`. Because it runs in the background, the Tkinter window never freezes while waiting for the server. [Unit 5: sockets, multithreading]
+* **`check_worker()`**: The main Tkinter thread uses `root.after(100, self.check_worker)` to repeatedly check if `self.worker_result` has arrived. Once it does, it safely updates the UI (showing success/error dialogs, updating seats left) and re-enables the buttons. [Unit 5: GUI event loop, multithreading]
